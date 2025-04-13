@@ -1,241 +1,149 @@
+// By Dheeraj Khatri (https://github.com/dheerajk2003)
 #include<stdio.h>
 #include<stdlib.h>
 
-struct Node {
-	int data;
-	struct Node* left;
-	struct Node* right;
-};
+typedef struct node{
+    int val;
+    struct node * left;
+    struct node * right;
+} node;
 
-void insert(struct Node** root, struct Node* newNode);
-void delete(struct Node** root);
-void preorder(struct Node* root);
-void postorder(struct Node* root);
-void inorder(struct Node* root);
-void search(struct Node* root, int data,struct Node** par, struct Node** selected);
-void findSucc(struct Node* right, struct Node** par, struct Node** succ);
-void findPred(struct Node* left,struct Node** par, struct Node** pred);
+node * getInPred(node*, node*);
+void deleteNode(node **, node *, int, int);
+void createTree(node ** root, int data);
+void printing(node * root);
 
-void main(){
-	int in;
-	struct Node* root = NULL;
-
-	while(1){
-		printf("\n1)Insert \n2)Delete \n3)Preorder \n4)Postorder \n5)Inorder \n6)Exit");
-		printf("\nEnter Choice:");
-		scanf("%d", &in);
-
-		switch(in){
-			case 1: insert(&root, NULL);
-				break;
-			case 2: delete(&root);
-				break;
-			case 3: preorder(root);
-				break;
-			case 4: postorder(root);
-				break;
-			case 5: inorder(root);
-				break;
-			case 6: exit(1);
-
-
-			default: printf("Invalid Option");
-		}
-	}
+int main(){
+    node * root = NULL;
+    int d;
+    while(1){
+        printf("Enter \n1 for insert \n2 for display \n3 for delete \n9 for exit");
+        scanf("%d",&d);
+        if(d == 1){
+            printf("Enter a value : ");
+            scanf("%d",&d);
+            createTree(&root, d);
+        }
+        else if(d == 2)
+            printing(root);
+        else if(d == 3){
+            printf("Enter data to delete : ");
+            scanf("%d", &d);
+            deleteNode(&root, NULL, d, 0);
+        }
+        else if(d == 9)
+            break;
+        else
+            printf("Wrong Choice : \n");
+    }
+    return 0;
 }
 
-void insert(struct Node** root, struct Node* newNode){
-	if(newNode == NULL){
-		newNode = (struct Node*) malloc(sizeof(struct Node));
-		
-		printf("Enter Data:");
-		scanf("%d", &newNode->data);
-		newNode->left = NULL;
-		newNode->right = NULL;
-	}
+node* getInPred(node* root, node* prev){
+    if(root->left == NULL){
+        if(prev != NULL)
+            prev->left = NULL;
+        return root;
+    }
+    getInPred(root->left, root);
+    return NULL;
+}
+void deleteNode(node ** root, node * prev, int data, int l){
+    if(*root == NULL)
+        return;
+    if((*root)->val == data){
+        node * temp = *root;
+        printf("Found data \n ");
+        // delete leaf node
+        if((*root)->left == NULL && (*root)->right == NULL){
+            if(prev == NULL){
+                *root = NULL;
+            }
+            else if(l == 1)
+                prev->left = NULL;
+            else
+                prev->right = NULL;
+        }
+        // del with right child
+        else if((*root)->left == NULL){
+            if(prev == NULL)
+                *root = (*root)->right;
+            else if(l == 1)
+                prev->left = (*root)->right;
+            else
+                prev->right = (*root)->right;
+        }
+        // del with left child
+        else if((*root)->right == NULL){
+            if(prev == NULL)
+                *root = (*root)->left;
 
-	if(*root == NULL){
-		*root = newNode;
-	}else if((*root)->data > newNode->data){
-		insert(&(*root)->left, newNode);
-	}else {
-		insert(&(*root)->right, newNode);
-	}
+            else if(l == 1)
+                prev->left = (*root)->left;
+            else
+                prev->right = (*root)->left;
+        }
+        // del with 2 child
+        else{
+            node * InPred = getInPred((*root)->right, NULL);
+            if(InPred != (*root)->left)
+                InPred->left = (*root)->left;
+            if(InPred != (*root)->right)
+                InPred->right = (*root)->right;
+            if(prev == NULL)
+                *root = InPred;
+            else if(l == 1)
+                prev->left = InPred;
+            else
+                prev->right = InPred;
+        }
+        free(temp);
+    }
+    else{
+        deleteNode(&(*root)->left, *root, data, 1);
+        deleteNode(&(*root)->right, *root, data, 0);
+    }
 }
 
-void delete(struct Node** root){
-	int item; 
-	struct Node *itemNode = NULL, *parNode = NULL;
-	struct Node *nearNode = NULL, *nearParNode = NULL;
-
-	if(*root == NULL){
-		printf("Tree is Empty");
-		return;
-	}
-
-	printf("Item to Delete: ");
-	scanf("%d", &item);
-
-	search(*root, item, &parNode, &itemNode);
-	if(itemNode==NULL){
-		printf("Item Not Found\n");
-		return;
-	}
-
-	// Leaf Node or Only Root
-	if(itemNode->left == NULL && itemNode->right == NULL){
-
-		if(parNode == NULL){
-			*root = NULL;
-		}else if(parNode->left == itemNode){
-			parNode->left = NULL;
-		}else {
-			parNode->right = NULL;
-		}
-
-		printf("Deleted Leaf or Only Root");
-	}else if(itemNode->left != NULL){
-		findPred(itemNode->left, &nearParNode, &nearNode);
-
-		// Root Node
-		if(parNode == NULL){
-			nearParNode->right = nearNode->left;
-			nearNode->right = (*root)->right;
-			nearNode->left = (*root)->left;
-			*root = nearNode;
-		}else {
-			nearParNode->right = nearNode->left;
-			nearNode->left = itemNode->left;
-			nearNode->right = itemNode->right;
-			
-			if(parNode->left == itemNode){
-				parNode->left = nearNode;
-			}else {
-				parNode->right = nearNode;
-			}
-		}
-
-		printf("Used Pred");
-	}else{
-		findSucc(itemNode->right, &nearParNode, &nearNode);
-
-		// Root Node
-		if(parNode == NULL){
-			nearParNode->left = nearNode->right;
-			nearNode->right = (*root)->right;
-			nearNode->left = (*root)->left;
-			*root = nearNode;
-		}else {
-			nearParNode->left = nearNode->right;
-			nearNode->left = itemNode->left;
-			nearNode->right = itemNode->right;
-			
-			if(parNode->left == itemNode){
-				parNode->left = nearNode;
-			}else {
-				parNode->right = nearNode;
-			}
-
-		}
-
-		printf("Used Succ");
-	}
-
-
-	free(itemNode);
-}
-void preorder(struct Node* root){
-	if(root == NULL) return;
-
-	printf("%d, ", root->data);
-
-	if(root->left != NULL){
-		preorder(root->left);
-	}
-
-	if(root->right != NULL){
-		preorder(root->right);
-	}
-}
-void postorder(struct Node* root){
-	if(root == NULL) return;
-
-	if(root->left != NULL){
-		postorder(root->left);
-	}
-
-	if(root->right != NULL){
-		postorder(root->right);
-	}
-
-	printf("%d, ", root->data);
-}
-void inorder(struct Node* root){
-	if(root == NULL) return;
-
-	if(root->left != NULL){
-		inorder(root->left);
-	}
-
-	printf("%d, ", root->data);
-
-	if(root->right != NULL){
-		inorder(root->right);
-	}
-
+void createTree(node ** root, int data){
+    if(*root == NULL){
+        *root = (node*)malloc(sizeof(node));
+        (*root)->val = data;
+        (*root)->left = NULL;
+        (*root)->right = NULL;
+        return;
+    }
+    else if((*root)->val > data){
+        if((*root)->left == NULL){
+            node * temp = (node*)malloc(sizeof(node));
+            temp->val = data;
+            temp->left = NULL;
+            temp->right = NULL;
+            (*root)->left = temp;
+        }
+        else{
+            createTree(&(*root)->left, data);
+        }
+        return;
+    }
+    else{
+        if((*root)->right == NULL){
+            node * temp = (node*)malloc(sizeof(node));
+            temp->val = data;
+            temp->left = NULL;
+            temp->right = NULL;
+            (*root)->right = temp;
+        }
+        else
+            createTree(&(*root)->right, data);
+        return;
+    }
 }
 
-void search(struct Node* root, int data, struct Node** par, struct Node** selected){
-	if(root == NULL) return;
-
-	if(root->data == data){
-		*selected = root;
-		return;
-	}else if(root->data > data){
-		search(root->left, data, par, selected);
-	}else {
-		search(root->right, data, par, selected);
-	}
-
-	if(*selected != NULL && *par == NULL){
-		*par = root;
-	}
-
-}
-
-void findSucc(struct Node* right, struct Node** par, struct Node** succ){
-	if(right == NULL) return;
-
-	if(right->left != NULL){
-		findSucc(right->left, par, succ);
-	}
-
-	if(*succ == NULL){
-		*succ = right;
-		return;
-	}
-
-	
-	if(*succ != NULL && *par == NULL){
-		*par = right;
-	}
-}
-
-void findPred(struct Node* left,struct Node** par, struct Node** pred){
-	if(left == NULL) return;
-
-
-	if(left->right != NULL){
-		findPred(left->right, par, pred);
-	}
-
-	if(*pred == NULL){
-		*pred = left;
-
-		return;
-	}
-
-	if(*pred != NULL && *par == NULL){
-		*par = left;
-	}
+void printing(node * root){
+    if(root == NULL)
+        return;
+    printing(root->left);
+    printf("%d \n",root->val);
+    printing(root->right);
 }
