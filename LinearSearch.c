@@ -13,7 +13,7 @@ void main(){
 
     for(i=0; i<max; i++){
       if(item == arr[i]){
-        printf("Item found at %d", i+1);
+        printf("Item found at %d\n", i+1);
         return;
       }
     }

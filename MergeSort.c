@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 void merge(int arr[], int beg, int mid, int end);
 void mergeSort(int arr[], int beg, int end);
 
-int main(void)
+int main()
 {
     int arr[] = {50, 31, 21, 28, 72, 41, 73, 93, 68, 43, 45, 78, 5, 17, 97, 71, 69, 61, 88, 75, 99, 44, 55, 9};
     int idx =0, len = 24;

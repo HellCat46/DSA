@@ -17,7 +17,7 @@ void main(){
 		mid = (u+l)/2;
 
 		if(arr[mid] ==  item){
-			printf("Found At %d", mid);
+			printf("Found At %d\n", mid+1);
 			return;
 		}else if(arr[mid] > item){
 			u = mid;
