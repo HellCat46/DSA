@@ -56,7 +56,7 @@ void dequeue(){
 	printf("Data Removed: %d", qu[f]);
 	if(f == r){
 		f = r = -1;
-	}else if(f == MAX-1 && r > 0){
+	}else if(f == MAX-1 && r >= 0){
 		f = 0;
 	}else{
 		f++;
